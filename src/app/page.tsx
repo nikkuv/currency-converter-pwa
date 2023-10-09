@@ -3,7 +3,7 @@
 // all react and zod related imports
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, UseFormReturn, UseFormProps } from 'react-hook-form';
+import { useForm, UseFormReturn, UseFormProps } from "react-hook-form";
 import { LuChevronsUpDown } from "react-icons/lu";
 import { IoSwapVerticalSharp } from "react-icons/io5";
 
@@ -51,10 +51,9 @@ interface ExchangeRates {
 
 export default function Home() {
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({});
-  const [selectedFromCurrency, setSelectedFromCurrency] = useState('');
-  const [selectedToCurrency, setSelectedToCurrency] = useState('');
+  const [selectedFromCurrency, setSelectedFromCurrency] = useState("USD");
+  const [selectedToCurrency, setSelectedToCurrency] = useState("INR");
   const [result, setResult] = useState("");
-  const [currenciesSwapped, setCurrenciesSwapped] = useState(false);
 
   // fatch the data from the API
   useEffect(() => {
@@ -67,28 +66,31 @@ export default function Home() {
   // validate amount
   function validateAmount(amount: string, currency: string): boolean {
     if (currency === "INR") {
-      const regex = /^(?:\d+(?:,\d{2})*(?:,\d{3})?(?:\.\d+)?|\d+(?:\.\d+)?(?:\s*lakhs?|crores?)?)$/i;
+      const regex =
+        /^(?:\d+(?:,\d{2})*(?:,\d{3})?(?:\.\d+)?|\d+(?:\.\d+)?(?:\s*lakhs?|crores?)?)$/i;
       return regex.test(amount.replace(/\s+/g, ""));
     } else if (currency === "USD") {
       const regex = /^(?:[0-9]+(?:,[0-9]{3})*(?:\.\d+)?|[0-9]+(?:\.\d+)?)$/;
       return regex.test(amount);
     }
-    return false;
-  }  
+    const regex = /^\d+$/;
+    return regex.test(amount)
+  }
 
   // form schema for validation
   const formSchema = (selectedCurrency: string) => {
     return z.object({
-      amount: z.string().refine(
-        (data) => validateAmount(data, selectedCurrency),
-        {
+      amount: z
+        .string()
+        .refine((data) => validateAmount(data, selectedCurrency), {
           message:
             selectedCurrency === "INR"
-              ? "Invalid INR format or comma placement. The first comma comes after the first three digits from the right (for thousands), and subsequent commas appear after every two digits. "
-              : "Invalid USD format or comma placement. The comma should be every after 3 digits.",
-        }
-      ),
-      
+              ? "Invalid INR format or comma placement. The first comma comes after the first three digits from the right (for thousands), and subsequent commas appear after every two digits."
+              : selectedCurrency === "USD"
+              ? "Invalid USD format or comma placement. The comma should be every after 3 digits."
+              : "Invalid currency",
+        }),
+
       fromCurrency: z.string({
         required_error: "Please select a currency.",
       }),
@@ -98,13 +100,13 @@ export default function Home() {
     });
   };
 
-  // const form = useForm<FormValues>({
-  //   resolver: zodResolver(formSchema(selectedFromCurrency)),
-  // }) as UseFormReturn<FormValues>;
-
   // zod resolver for validation
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema(selectedFromCurrency)),
+    defaultValues: {
+      fromCurrency: selectedFromCurrency,
+      toCurrency: selectedToCurrency,
+    },
   });
 
   const formatValue = (val: string) => {
@@ -136,29 +138,34 @@ export default function Home() {
     const values = form.getValues();
     const rate =
       exchangeRates[values.toCurrency] / exchangeRates[values.fromCurrency];
-    // console.log(values)
     let amount = formatValue(values.amount);
     setResult((Number(amount) * rate).toFixed(2));
   }
 
   const handleSwitchClick = () => {
-    if (currenciesSwapped) {
-      form.setValue("fromCurrency", selectedFromCurrency);
-      form.setValue("toCurrency", selectedToCurrency);
-    } else {
-      form.setValue("fromCurrency", selectedToCurrency);
-      form.setValue("toCurrency", selectedFromCurrency);
-    }
+    // Get current values from the form.
+    const currentFromCurrency = form.getValues("fromCurrency");
+    const currentToCurrency = form.getValues("toCurrency");
 
-    setCurrenciesSwapped(!currenciesSwapped);
-    form.trigger("amount"); 
+    // Swap the values.
+    form.setValue("fromCurrency", currentToCurrency);
+    form.setValue("toCurrency", currentFromCurrency);
+
+    // Update the state.
+    setSelectedFromCurrency(currentToCurrency);
+
+    // Trigger the validation for the 'amount' field.
+    form.trigger("amount");
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <h1 className="text-4xl py-8 text-teal-500">Currency Converter</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-lg space-y-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="max-w-lg space-y-8"
+        >
           <FormField
             control={form.control}
             name="amount"
@@ -166,7 +173,7 @@ export default function Home() {
               <FormItem>
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
-                <Input
+                  <Input
                     placeholder={
                       selectedFromCurrency === "INR"
                         ? "Enter the amount in INR"
@@ -237,7 +244,7 @@ export default function Home() {
               onClick={handleSwitchClick}
               className="h-12 w-12 mr-4 hover:bg-teal-100 px-2 py-2 border flex transform rotate-90 items-center justify-center border-teal-500 rounded-full"
             >
-               <IoSwapVerticalSharp size={20} className="text-teal-500" />
+              <IoSwapVerticalSharp size={20} className="text-teal-500" />
             </button>
             <FormField
               control={form.control}
@@ -251,7 +258,6 @@ export default function Home() {
                         <Button
                           variant="outline"
                           role="combobox"
-
                           defaultValue={selectedToCurrency}
                           className={cn(
                             "w-[200px] justify-between",
@@ -278,7 +284,7 @@ export default function Home() {
                               key={exchangeRates.language}
                               onSelect={() => {
                                 form.setValue("toCurrency", currency);
-                                setSelectedToCurrency(currency)
+                                setSelectedToCurrency(currency);
                               }}
                             >
                               {currency}
