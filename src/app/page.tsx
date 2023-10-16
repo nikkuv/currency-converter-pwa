@@ -67,14 +67,14 @@ export default function Home() {
   function validateAmount(amount: string, currency: string): boolean {
     if (currency === "INR") {
       const regex =
-        /^(?:\d+(?:,\d{2})*(?:,\d{3})?(?:\.\d+)?|\d+(?:\.\d+)?(?:\s*lakhs?|crores?)?)$/i;
+        /^(?:\d+(?:,\d{2})*(?:,\d{3})?(?:\.\d+)?|\d+(?:\.\d+)?(?:\s*lakhs?|crores?|rupees?)?)$/i;
       return regex.test(amount.replace(/\s+/g, ""));
     } else if (currency === "USD") {
       const regex = /^(?:[0-9]+(?:,[0-9]{3})*(?:\.\d+)?|[0-9]+(?:\.\d+)?)$/;
       return regex.test(amount);
     }
     const regex = /^\d+$/;
-    return regex.test(amount)
+    return regex.test(amount);
   }
 
   // form schema for validation
@@ -124,6 +124,9 @@ export default function Home() {
         case "crores":
           numericValue = (parseFloat(words[0]) * 10000000).toString();
           break;
+        case "rupee":
+        case "rupees":
+          numericValue = (parseFloat(words[0])).toString();
         default:
           numericValue = parseFloat(words[0]).toString();
       }
@@ -159,12 +162,12 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <main className="flex flex-col min-h-screen items-center justify-center p-4 md:p-24">
       <h1 className="text-4xl py-8 text-teal-500">Currency Converter</h1>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="max-w-lg space-y-8"
+          className="w-full md:max-w-lg space-y-4 md:space-y-8"
         >
           <FormField
             control={form.control}
@@ -186,13 +189,13 @@ export default function Home() {
               </FormItem>
             )}
           />
-          <div className="flex max-w-lg items-center justify-center">
+          <div className="flex flex-col gap-6 items-stretch md:gap-0 md:flex-row max-w-lg justify-center">
             <FormField
               control={form.control}
               name="fromCurrency"
               render={({ field }) => (
-                <FormItem className="flex flex-col mr-4">
-                  <FormLabel>fromCurrency</FormLabel>
+                <FormItem className="flex flex-col md:mr-4">
+                  <FormLabel>From Currency</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -201,7 +204,7 @@ export default function Home() {
                           role="combobox"
                           defaultValue={selectedFromCurrency}
                           className={cn(
-                            "w-[200px] justify-between",
+                            "flex w-full md:inline-flex md:w-[215px] w-full justify-between",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -214,11 +217,11 @@ export default function Home() {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
+                    <PopoverContent className="w-[215px] p-0">
                       <Command>
                         <CommandInput placeholder="Search Currency..." />
                         <CommandEmpty>No framework found.</CommandEmpty>
-                        <CommandGroup className="h-[300px] overflow-auto">
+                        <CommandGroup className="h-[250px] overflow-auto">
                           {Object.keys(exchangeRates).map((currency) => (
                             <CommandItem
                               value={currency}
@@ -242,7 +245,7 @@ export default function Home() {
             <button
               type="button"
               onClick={handleSwitchClick}
-              className="h-12 w-12 mr-4 hover:bg-teal-100 px-2 py-2 border flex transform rotate-90 items-center justify-center border-teal-500 rounded-full"
+              className="h-12 w-12 md:mt-4 self-center md:mt-0 md:mr-4 hover:bg-teal-100 px-2 py-2 border flex transform rotate-90 items-center justify-center border-teal-500 rounded-full"
             >
               <IoSwapVerticalSharp size={20} className="text-teal-500" />
             </button>
@@ -251,7 +254,7 @@ export default function Home() {
               name="toCurrency"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>toCurrency</FormLabel>
+                  <FormLabel>To Currency</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -260,7 +263,7 @@ export default function Home() {
                           role="combobox"
                           defaultValue={selectedToCurrency}
                           className={cn(
-                            "w-[200px] justify-between",
+                            "w-full md:w-[215px] w-full justify-between",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -273,11 +276,11 @@ export default function Home() {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
+                    <PopoverContent className="w-[215px] p-0">
                       <Command>
                         <CommandInput placeholder="Search Currency..." />
                         <CommandEmpty>No currency found.</CommandEmpty>
-                        <CommandGroup className="h-[300px] overflow-auto">
+                        <CommandGroup className="h-[250px] overflow-auto">
                           {Object.keys(exchangeRates).map((currency) => (
                             <CommandItem
                               value={currency}
@@ -307,7 +310,7 @@ export default function Home() {
           </Button>
         </form>
       </Form>
-      <p className="text-4xl py-8 text-teal-500">{result}</p>
+      <p className="text-2xl md:text-4xl py-4 md:py-8 text-teal-500">{result}</p>
     </main>
   );
 }
